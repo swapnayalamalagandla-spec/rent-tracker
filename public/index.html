@@ -305,7 +305,36 @@ function loadTenants() {
         document.getElementById("income").innerText = "₹" + income;
     });
 }
+function payRent(id) {
 
+    let amount = prompt("Enter amount:");
+
+    if (!amount) return;
+
+    const month = document.getElementById("monthSelect").value;
+    const year = document.getElementById("yearSelect").value;
+
+    fetch("/payments/pay", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+            tenant_id: id,
+            amount,
+            month,
+            year
+        })
+    })
+    .then(res => res.text())
+    .then(msg => {
+        alert(msg);
+        loadTenants();
+    })
+    .catch(err => {
+        console.log(err);
+        alert("Payment failed");
+    });
+}
 function viewHistory(id) {
 
     fetch(`/payments/history/${id}`)

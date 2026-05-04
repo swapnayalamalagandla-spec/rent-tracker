@@ -66,16 +66,23 @@ document.getElementById("tenantForm").addEventListener("submit", function(e) {
         phone: document.getElementById("phone").value
     };
 
-    fetch("/tenants/add", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify(data)
-    })
-    .then(res => res.text())
-    .then(msg => {
-        alert(msg);
-        window.location.href = "index.html";
-    });
+   fetch("/tenants/add", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(data)
+})
+.then(res => {
+    if (!res.ok) throw new Error("Failed to add tenant");
+    return res.text();
+})
+.then(msg => {
+    alert(msg);
+    window.location.href = "index.html";
+})
+.catch(err => {
+    alert("Error: " + err.message);
+});
 });
 
 </script>

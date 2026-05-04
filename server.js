@@ -65,7 +65,7 @@ function auth(req, res, next) {
     }
 }
 
-app.use("/tenants", auth, tenantRoutes);
+app.use("/tenants",  tenantRoutes);
 app.use("/payments", auth, paymentRoutes);
 
 
