@@ -9,11 +9,17 @@ app.use(cors({
     origin: true,
     credentials: true
 }));
+
 app.use(bodyParser.json());
+
 app.use(session({
     secret: "rentapp",
     resave: false,
-    saveUninitialized: true
+    saveUninitialized: false,
+    cookie: {
+        secure: true,
+        sameSite: "none"
+    }
 }));
 
 app.get("/", (req, res) => {
