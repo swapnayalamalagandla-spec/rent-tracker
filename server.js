@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
+const session = require("express-session");
 const jwt = require("jsonwebtoken");
 const SECRET = "rent_secret_key";
 
@@ -12,6 +13,16 @@ app.use(cors({
 }));
 
 app.use(bodyParser.json());
+
+app.use(session({
+    secret: "rentapp",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        secure: true,
+        sameSite: "none"
+    }
+}));
 
 app.get("/", (req, res) => {
     if (req.session.user) {
@@ -63,21 +74,12 @@ const tenantRoutes = require("./routes/tenants");
 const paymentRoutes = require("./routes/payments");
 
 function auth(req, res, next) {
-
-    const token = req.headers["authorization"];
-
-    if (!token) {
-        return res.status(401).send("No token");
-    }
-
-    try {
-        jwt.verify(token, SECRET);
+    if (req.session && req.session.user) {
         next();
-    } catch (err) {
-        res.status(401).send("Invalid token");
+    } else {
+        res.status(401).send("Unauthorized");
     }
 }
-
 app.use("/tenants", auth, tenantRoutes);
 app.use("/payments", auth, paymentRoutes);
 
