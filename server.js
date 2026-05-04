@@ -1,7 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
-const session = require("express-session");
+const jwt = require("jsonwebtoken");
+const SECRET = "rent_secret_key";
 
 const app = express();
 
@@ -11,16 +12,6 @@ app.use(cors({
 }));
 
 app.use(bodyParser.json());
-
-app.use(session({
-    secret: "rentapp",
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-        secure: true,
-        sameSite: "none"
-    }
-}));
 
 app.get("/", (req, res) => {
     if (req.session.user) {
@@ -37,11 +28,19 @@ const ADMIN_USER = "mamathasuresh";
 const ADMIN_PASS = "ammu1234";
 
 app.post("/login", (req, res) => {
+
     const { username, password } = req.body;
 
-    if (username === ADMIN_USER && password === ADMIN_PASS) {
-        req.session.user = { username: "admin" };
-        res.json({ success: true });
+    if (username === "mamathasuresh" && password === "ammu1234") {
+
+        const token = jwt.sign(
+            { user: "admin" },
+            SECRET,
+            { expiresIn: "1d" }
+        );
+
+        res.json({ success: true, token });
+
     } else {
         res.json({ success: false, message: "Invalid credentials" });
     }
@@ -64,14 +63,22 @@ const tenantRoutes = require("./routes/tenants");
 const paymentRoutes = require("./routes/payments");
 
 function auth(req, res, next) {
-    if (req.session.user) {
+
+    const token = req.headers["authorization"];
+
+    if (!token) {
+        return res.status(401).send("No token");
+    }
+
+    try {
+        jwt.verify(token, SECRET);
         next();
-    } else {
-        res.status(401).send("Unauthorized");
+    } catch (err) {
+        res.status(401).send("Invalid token");
     }
 }
 
-app.use("/tenants",  tenantRoutes);
+app.use("/tenants", auth, tenantRoutes);
 app.use("/payments", auth, paymentRoutes);
 
 

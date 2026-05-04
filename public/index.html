@@ -210,41 +210,10 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("yearSelect").value =
         new Date().getFullYear();
 
-    checkAuth();
+    loadTenants(); // ✅ direct load
 });
 
-function changeMonth(step) {
-    let m = document.getElementById("monthSelect");
-    let y = document.getElementById("yearSelect");
-
-    let i = months.indexOf(m.value);
-    let year = parseInt(y.value);
-
-    i += step;
-
-    if (i < 0) { i = 11; year--; }
-    else if (i > 11) { i = 0; year++; }
-
-    m.value = months[i];
-    y.value = year;
-
-    loadTenants();
-}
-
-function checkAuth() {
-    fetch("/check-auth")
-    .then(res => res.json())
-    .then(data => {
-        if (!data.loggedIn) {
-            window.location.href = "login.html";
-        } else {
-            document.getElementById("welcomeUser").innerText =
-                "Welcome " + (data.username || "");
-            loadTenants();
-        }
-    });
-}
-
+// LOAD TENANTS
 function loadTenants() {
 
     const month = document.getElementById("monthSelect").value;
@@ -292,23 +261,23 @@ function loadTenants() {
                 <td>${statusBadge}</td>
                 <td>
                     <button class="btn btn-primary btn-sm" onclick="payRent(${t.id})">Pay</button>
-                    <button class="btn btn-info btn-sm ms-1" onclick="viewHistory(${t.id})">History</button>
+                    <button class="btn btn-info btn-sm" onclick="viewHistory(${t.id})">History</button>
                 </td>
             </tr>`;
         });
 
         document.getElementById("tenantTable").innerHTML = rows;
-
         document.getElementById("totalTenants").innerText = total;
         document.getElementById("paidCount").innerText = paidCount;
         document.getElementById("pendingCount").innerText = total - paidCount;
         document.getElementById("income").innerText = "₹" + income;
     });
 }
+
+// PAY RENT
 function payRent(id) {
 
     let amount = prompt("Enter amount:");
-
     if (!amount) return;
 
     const month = document.getElementById("monthSelect").value;
@@ -317,24 +286,17 @@ function payRent(id) {
     fetch("/payments/pay", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-            tenant_id: id,
-            amount,
-            month,
-            year
-        })
+        body: JSON.stringify({ tenant_id: id, amount, month, year })
     })
     .then(res => res.text())
     .then(msg => {
         alert(msg);
         loadTenants();
     })
-    .catch(err => {
-        console.log(err);
-        alert("Payment failed");
-    });
+    .catch(() => alert("Payment failed"));
 }
+
+// HISTORY
 function viewHistory(id) {
 
     fetch(`/payments/history/${id}`)
@@ -362,6 +324,7 @@ function closeHistory() {
     document.getElementById("historyModal").style.display = "none";
 }
 
+// LOGOUT
 function logout() {
     fetch("/logout").then(() => {
         window.location.href = "login.html";
